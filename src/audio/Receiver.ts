@@ -41,6 +41,8 @@ export class Receiver {
   private humGain: GainNode | null = null
   private analyser: AnalyserNode | null = null
   private meter: Uint8Array<ArrayBuffer> | null = null
+  private bassAnalyser: AnalyserNode | null = null
+  private bassBins: Uint8Array<ArrayBuffer> | null = null
   private voices = new Map<string, Voice>()
   private running = false
   private disposed = false
@@ -109,6 +111,13 @@ export class Receiver {
     this.analyser = analyser
     this.meter = new Uint8Array(new ArrayBuffer(analyser.fftSize))
 
+    const bassAnalyser = ctx.createAnalyser()
+    bassAnalyser.fftSize = 1024
+    bassAnalyser.smoothingTimeConstant = 0.4
+    shaper.connect(bassAnalyser)
+    this.bassAnalyser = bassAnalyser
+    this.bassBins = new Uint8Array(new ArrayBuffer(bassAnalyser.frequencyBinCount))
+
     shaper.connect(speaker)
     speaker.connect(cone)
     cone.connect(cone2)
@@ -138,7 +147,7 @@ export class Receiver {
     this.noiseFilter = noiseFilter
 
     const noiseGain = ctx.createGain()
-    noiseGain.gain.value = 0.105
+    noiseGain.gain.value = 0.115
     this.noiseGain = noiseGain
 
     noise.connect(noiseFilter)
@@ -311,9 +320,9 @@ export class Receiver {
     if (!ctx || !nf || !ng) return
     const now = ctx.currentTime
     const hiss = dead ? 0.42 : 1
-    ramp(nf.frequency, 620 + 1500 * signal, 0.07, now)
-    ramp(nf.Q, 0.5 + 2.6 * signal, 0.08, now)
-    ramp(ng.gain, 0.105 * hiss * (1 - 0.62 * signal), 0.1, now)
+    ramp(nf.frequency, 520 + 1400 * signal, 0.07, now)
+    ramp(nf.Q, 0.45 + 2.2 * signal, 0.08, now)
+    ramp(ng.gain, 0.115 * hiss * (1 - 0.4 * signal), 0.1, now)
     if (this.carrierA && this.carrierB && this.carrierGain) {
       const whistle = Math.sin(Math.PI * Math.min(1, Math.max(0, miss)))
       const f = 620 + 780 * miss * miss
@@ -325,7 +334,7 @@ export class Receiver {
     if (dead) this.nextCrackle = now + 0.5
     else if (now > this.nextCrackle) {
       this.pop(now, 0.05 + miss * 0.22)
-      this.nextCrackle = now + 0.04 + Math.random() * (0.4 + miss * 0.9)
+      this.nextCrackle = now + 0.03 + Math.random() * (0.3 + miss * 0.75)
     }
   }
 
@@ -437,6 +446,22 @@ export class Receiver {
       sum += v * v
     }
     return Math.min(1, Math.sqrt(sum / meter.length) * 3.4)
+  }
+
+  bassLevel(): number {
+    const a = this.bassAnalyser
+    const bins = this.bassBins
+    if (!a || !bins) return 0
+    a.getByteFrequencyData(bins)
+    const per = a.context.sampleRate / a.fftSize
+    const lo = Math.max(1, Math.floor(26 / per))
+    const hi = Math.min(bins.length - 1, Math.ceil(170 / per))
+    let sum = 0
+    for (let i = lo; i <= hi; i++) {
+      const v = bins[i]! / 255
+      sum += v * v
+    }
+    return Math.min(1, (Math.sqrt(sum / (hi - lo + 1)) * 1.9))
   }
 
   async suspend(): Promise<void> {

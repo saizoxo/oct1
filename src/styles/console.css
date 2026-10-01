@@ -52,6 +52,9 @@
   position: absolute;
   inset: 4%;
   border-radius: 50%;
+  box-shadow:
+    0 0 0 1px rgba(255, 238, 208, 0.09),
+    0 0 14px rgba(0, 0, 0, 0.5) inset;
   background: radial-gradient(
     circle at 36% 27%,
     #4c433a 0%,
@@ -68,15 +71,29 @@
 
 .knob-flutes {
   position: absolute;
-  inset: -6%;
+  inset: -7%;
+  background:
+    repeating-conic-gradient(
+      from 0deg,
+      rgba(255, 244, 220, 0.3) 0deg 1.3deg,
+      rgba(0, 0, 0, 0.62) 1.3deg 4.2deg
+    );
+  -webkit-mask: radial-gradient(circle, transparent 58%, #000 63%);
+  mask: radial-gradient(circle, transparent 58%, #000 63%);
+  opacity: 1;
+}
+
+.knob-flutes::after {
+  content: '';
+  position: absolute;
+  inset: 0;
   background: repeating-conic-gradient(
-    from 0deg,
-    rgba(255, 240, 214, 0.14) 0deg 1.1deg,
-    rgba(0, 0, 0, 0.4) 1.1deg 3.3deg
+    from 1.4deg,
+    rgba(255, 244, 220, 0.16) 0deg 0.7deg,
+    transparent 0.7deg 2.1deg
   );
-  -webkit-mask: radial-gradient(circle, transparent 68%, #000 71%);
-  mask: radial-gradient(circle, transparent 68%, #000 71%);
-  opacity: 0.85;
+  -webkit-mask: radial-gradient(circle, transparent 58%, #000 63%);
+  mask: radial-gradient(circle, transparent 58%, #000 63%);
 }
 
 .knob-face {

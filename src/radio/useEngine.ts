@@ -15,24 +15,17 @@ import { angleToFreq, clamp, jitter, readBand } from './band'
 import { angleOf } from './layout'
 
 const PLAY = 0.4
-const SPRING = 300
-const DAMP = 0.84
-const GEAR = 0.62
+const KNOB_SPAN = 360
+const GEAR = (BAND.sweepMax - BAND.sweepMin) / KNOB_SPAN
+const KNOB_MIN = BAND.sweepMin / GEAR
+const KNOB_MAX = BAND.sweepMax / GEAR
 const FINE_AFTER = 0.42
 const FINE_SENS = 0.34
 const PUBLISH_MS = 66
 const ERASE_MS = 900
 
 type Drag =
-  | {
-      mode: 'knob'
-      pointerId: number
-      base: number
-      origin: number
-      last: number
-      turn: number
-      started: number
-    }
+  | { mode: 'knob'; pointerId: number; last: number; started: number }
   | { mode: 'glass'; pointerId: number; x: number; base: number; started: number }
 
 export type Readout = {
@@ -76,15 +69,18 @@ export function useEngine() {
     drag: null as Drag | null,
     fineLatch: false,
     fineAmount: 1,
-    knob: BAND.sweepMin / GEAR,
+    knob: KNOB_MIN,
     candidate: '',
     lockedSince: 0,
     published: 0,
     mark: 0,
     audit: 0,
     side: STATIONS.map((s) => (BAND.min < s.kHz ? 0 : 1)),
+    crisp: 0,
     pump: 0,
+    pumpVel: 0,
     sway: 0,
+    swayVel: 0,
   })
 
   const mirror = useRef({ found: state.found, finale: state.finale })
@@ -123,8 +119,8 @@ export function useEngine() {
       const sens = p.fineLatch ? FINE_SENS : p.fineAmount
 
       if (Math.abs(p.cmd - p.angle) < PLAY) p.cmd = p.angle
-      p.vel += (p.cmd - p.angle) * SPRING * dt
-      p.vel *= Math.pow(DAMP, dt * 60)
+      p.vel += (p.cmd - p.angle) * (90 + 250 * p.crisp) * dt
+      p.vel *= Math.pow(0.87 - 0.09 * p.crisp, dt * 60)
       p.angle += p.vel * dt
       if (p.angle < BAND.sweepMin) {
         p.angle = BAND.sweepMin
@@ -138,6 +134,7 @@ export function useEngine() {
       const freq = angleToFreq(p.angle)
       const reading = readBand(freq, STATIONS)
       const signal = reading.level
+      p.crisp += (clamp((signal - 0.14) / 0.5, 0, 1) - p.crisp) * (1 - Math.pow(0.002, dt))
       const tremor = 0.03 + 0.11 * (1 - signal)
       const wobble = jitter(t, tremor) * (live.current.power ? 1 : 0.3)
 
@@ -225,7 +222,7 @@ export function useEngine() {
         ).toFixed(3)}deg)`
       }
       if (!p.drag || p.drag.mode !== 'knob') {
-        p.knob += (p.angle / GEAR - p.knob) * (1 - Math.pow(0.02, dt))
+        p.knob = clamp(p.cmd, BAND.sweepMin, BAND.sweepMax) / GEAR
       }
       if (knobFace.current) {
         knobFace.current.style.transform = `rotate(${p.knob.toFixed(2)}deg)`
@@ -306,13 +303,11 @@ export function useEngine() {
       const r = el.getBoundingClientRect()
       const cx = r.left + r.width / 2
       const cy = r.top + r.height / 2
+      phys.current.knob = clamp(phys.current.cmd / GEAR, KNOB_MIN, KNOB_MAX)
       phys.current.drag = {
         mode: 'knob',
         pointerId: e.pointerId,
         last: (Math.atan2(e.clientY - cy, e.clientX - cx) * 180) / Math.PI,
-        base: phys.current.cmd,
-        origin: phys.current.knob,
-        turn: 0,
         started: performance.now(),
       }
     },
@@ -325,14 +320,10 @@ export function useEngine() {
       const cx = r.left + r.width / 2
       const cy = r.top + r.height / 2
       const here = (Math.atan2(e.clientY - cy, e.clientX - cx) * 180) / Math.PI
-      drag.turn += shortest(drag.last, here)
+      const step = shortest(drag.last, here) * phys.current.fineAmount
       drag.last = here
-      phys.current.knob = drag.origin + drag.turn
-      phys.current.cmd = clamp(
-        drag.base + drag.turn * GEAR * phys.current.fineAmount,
-        BAND.sweepMin,
-        BAND.sweepMax,
-      )
+      phys.current.knob = clamp(phys.current.knob + step, KNOB_MIN, KNOB_MAX)
+      phys.current.cmd = clamp(phys.current.knob * GEAR, BAND.sweepMin, BAND.sweepMax)
     },
     onKnobDoubleClick() {
       phys.current.fineLatch = !phys.current.fineLatch

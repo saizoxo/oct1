@@ -19,8 +19,8 @@
   top: 50%;
   width: 78%;
   aspect-ratio: 1;
-  transform: translate(-50%, -50%) scaleY(calc(1 + var(--pump) * 0.1))
-    scaleX(calc(1 + var(--pump) * 0.05));
+  transform: translate(-50%, -50%) scaleY(calc(1 + var(--pump) * 0.17))
+    scaleX(calc(1 + var(--pump) * 0.07));
   border-radius: 50%;
   background: radial-gradient(
     circle at 50% 42%,
@@ -38,7 +38,7 @@
   top: 50%;
   width: 26%;
   aspect-ratio: 1;
-  transform: translate(-50%, calc(-50% + var(--sway) * 13px));
+  transform: translate(-50%, calc(-50% + var(--sway) * 17px));
   border-radius: 50%;
   background: radial-gradient(circle at 42% 36%, #4a3d30 0%, #241c15 68%, #14100b 100%);
 }
@@ -46,7 +46,7 @@
 .grille-cloth {
   position: absolute;
   inset: -2%;
-  transform: scale(calc(1 + var(--pump) * 0.035));
+  transform: scale(calc(1 + var(--pump) * 0.055));
   background-image:
     repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.34) 0 1px, rgba(122, 96, 62, 0.2) 1px 2.4px),
     repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.28) 0 1px, rgba(122, 96, 62, 0.16) 1px 2.4px);

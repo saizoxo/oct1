@@ -17,12 +17,12 @@ export const LOCK_LEVEL = 0.78
 export const LOCK_HOLD_MS = 340
 
 export const STATIONS: Station[] = [
-  { id: 's1', kHz: 636, name: 'TERRACE', audio: 'tracks/one.mp3' },
-  { id: 's2', kHz: 758, name: 'HOME', audio: 'tracks/two.mp3' },
-  { id: 's3', kHz: 903, name: 'DETOUR', audio: 'tracks/three.mp3' },
-  { id: 's4', kHz: 1071, name: '3AM', audio: 'tracks/four.mp3' },
-  { id: 's5', kHz: 1246, name: 'RAIN', audio: 'tracks/five.mp3' },
-  { id: 's6', kHz: 1468, name: 'QUIET', audio: 'tracks/six.mp3' },
+  { id: 's1', kHz: 629, name: 'TERRACE', audio: 'tracks/one.mp3' },
+  { id: 's2', kHz: 815, name: 'HOME', audio: 'tracks/two.mp3' },
+  { id: 's3', kHz: 1001, name: 'DETOUR', audio: 'tracks/three.mp3' },
+  { id: 's4', kHz: 1187, name: '3AM', audio: 'tracks/four.mp3' },
+  { id: 's5', kHz: 1373, name: 'RAIN', audio: 'tracks/five.mp3' },
+  { id: 's6', kHz: 1559, name: 'QUIET', audio: 'tracks/six.mp3' },
 ]
 
 export const FINAL_FREQ = 1633
