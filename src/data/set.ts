@@ -30,8 +30,11 @@ export const FINAL_FREQ = 1633
 export const PLATE = 'RECEIVER · 6'
 
 export const FINALE: string[] = [
-  'Six things I kept, one per frequency.',
-  'You only have to find them once.',
-  'The seventh is the only one that matters,',
-  'and it has never been on the dial.',
+  'You know jaana?',
+  'It was never about finding the songs —',
+  'the prettiest melody is our silence that burns.',
+  'I just wish we solve everything together,',
+  'find solutions, find paths that somehow,',
+  'at the end of the day lead to us.',
+  'I love you Shreya.',
 ]

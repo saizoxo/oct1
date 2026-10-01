@@ -5,7 +5,7 @@ import { FINALE, STATIONS } from '../data/set'
 type Props = {
   needle: RefObject<HTMLDivElement | null>
   found: Record<string, true>
-  finale: boolean
+  note: boolean
   silent: Set<string>
   fine: boolean
   glassRef: (el: HTMLDivElement | null) => void
@@ -47,7 +47,7 @@ function reduceMotion() {
 export const DialWindow = memo(function DialWindow({
   needle,
   found,
-  finale,
+  note,
   silent,
   fine,
   glassRef,
@@ -57,8 +57,8 @@ export const DialWindow = memo(function DialWindow({
 }: Props) {
   const pace = reduceMotion() ? 0 : 26
   const total = FINALE.join('').length
-  const typed = useTyped(FINALE, finale, pace)
-  const done = finale && (pace === 0 || typed >= total)
+  const typed = useTyped(FINALE, note, pace)
+  const done = note && (pace === 0 || typed >= total)
   let budget = pace === 0 ? total : typed
   const shown = FINALE.map((line) => {
     if (budget >= line.length) {
@@ -86,7 +86,7 @@ export const DialWindow = memo(function DialWindow({
     >
       <div className="dial-card" style={{ aspectRatio: `${DIAL.width}/${DIAL.height}` }}>
         <svg
-          className="dial-print"
+          className={'dial-print' + (note ? ' is-clear' : '')}
           viewBox={`0 0 ${DIAL.width} ${DIAL.height}`}
           aria-hidden="true"
         >
@@ -137,7 +137,7 @@ export const DialWindow = memo(function DialWindow({
           )}
 
           {showFinaleMark && (
-            <g className={finale ? 'finale-mark is-lit' : 'finale-mark'}>
+            <g className={note ? 'finale-mark is-lit' : 'finale-mark'}>
               <line
                 x1={finaleMark.x}
                 y1={finaleMark.y - 44}
@@ -161,6 +161,8 @@ export const DialWindow = memo(function DialWindow({
             ) : null,
           )}
         </svg>
+
+        <div className={'dial-scrim' + (note ? ' is-on' : '')} aria-hidden="true" />
 
         <div className="needle" ref={needle} aria-hidden="true">
           <span className="needle-tip" />

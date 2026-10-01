@@ -62,7 +62,7 @@ export function Radio({ engine, plate }: Props) {
         <DialWindow
           needle={needle}
           found={state.found}
-          finale={state.finale}
+          note={state.note}
           silent={new Set(silent)}
           fine={readout.fine}
           glassRef={dial.glassRef}

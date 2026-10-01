@@ -3,6 +3,7 @@ export type RadioState = {
   found: Record<string, true>
   locked: string | null
   finale: boolean
+  note: boolean
 }
 
 export type RadioAction =
@@ -10,6 +11,7 @@ export type RadioAction =
   | { type: 'lock'; id: string | null }
   | { type: 'discover'; id: string }
   | { type: 'finale'; on: boolean }
+  | { type: 'note'; on: boolean }
   | { type: 'erase' }
 
 const KEY = 'receiver:v1'
@@ -39,6 +41,7 @@ export const initialState = (): RadioState => ({
   found: loadFound(),
   locked: null,
   finale: false,
+  note: false,
 })
 
 export function reducer(state: RadioState, action: RadioAction): RadioState {
@@ -55,9 +58,11 @@ export function reducer(state: RadioState, action: RadioAction): RadioState {
     }
     case 'finale':
       return state.finale === action.on ? state : { ...state, finale: action.on }
+    case 'note':
+      return state.note === action.on ? state : { ...state, note: action.on }
     case 'erase': {
       saveFound({})
-      return { ...state, found: {}, finale: false }
+      return { ...state, found: {}, finale: false, note: false }
     }
     default:
       return state

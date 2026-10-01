@@ -20,9 +20,10 @@ const GEAR = (BAND.sweepMax - BAND.sweepMin) / KNOB_SPAN
 const KNOB_MIN = BAND.sweepMin / GEAR
 const KNOB_MAX = BAND.sweepMax / GEAR
 const FINE_AFTER = 0.42
-const FINE_SENS = 0.34
+const FINE_SENS = 0.22
 const PUBLISH_MS = 66
 const ERASE_MS = 900
+const FINALE_DWELL_MS = 3000
 
 type Drag =
   | { mode: 'knob'; pointerId: number; last: number; started: number }
@@ -75,6 +76,8 @@ export function useEngine() {
     published: 0,
     mark: 0,
     audit: 0,
+    dwell: 0,
+    note: false,
     side: STATIONS.map((s) => (BAND.min < s.kHz ? 0 : 1)),
     crisp: 0,
     pump: 0,
@@ -87,7 +90,7 @@ export function useEngine() {
   mirror.current.found = state.found
   mirror.current.finale = state.finale
 
-  const live = useRef({ power: false, locked: '', finale: false })
+  const live = useRef({ power: false, locked: '', finale: false, note: false })
   const erase = useRef(0)
   const eraseShown = useRef(-1)
 
@@ -135,20 +138,33 @@ export function useEngine() {
       const reading = readBand(freq, STATIONS)
       const signal = reading.level
       p.crisp += (clamp((signal - 0.14) / 0.5, 0, 1) - p.crisp) * (1 - Math.pow(0.002, dt))
-      const tremor = 0.03 + 0.11 * (1 - signal)
+      const tremor = 0.005 + 0.13 * (1 - signal)
       const wobble = jitter(t, tremor) * (live.current.power ? 1 : 0.3)
-
-      if (reading.station && signal > 0.42) {
-        const home = angleOf(reading.at)
-        const gap = home - p.angle
-        if (Math.abs(gap) < 3.4) {
-          const grip = (signal - 0.42) / 0.58
-          p.cmd += gap * grip * (p.drag ? 0.05 : 0.16) * (dt * 60)
-        }
-      }
 
       const armed =
         live.current.power && Object.keys(mirror.current.found).length >= STATIONS.length
+
+      let carrier = 0
+      if (signal > 0.3) carrier = signal
+      const finalGap = FINAL_FREQ - freq
+      if (armed && Math.abs(finalGap) < 22 && Math.abs(finalGap) < Math.abs(carrier * 1000 - finalGap)) {
+        carrier = Math.max(carrier, 1 - Math.abs(finalGap) / 22)
+        p.dwell += dt * 1000
+      } else {
+        p.dwell = 0
+      }
+
+      if (carrier > 0.3) {
+        const home = angleOf(
+          armed && p.dwell > 0 ? FINAL_FREQ : reading.at,
+        )
+        const gap = home - p.angle
+        if (Math.abs(gap) < 4.6) {
+          const grip = (carrier - 0.3) / 0.7
+          p.cmd += gap * grip * (p.drag ? 0.1 : 0.3) * (dt * 60)
+        }
+      }
+
       if (armed && !mirror.current.finale) {
         if (!dead) {
           dead = true
@@ -183,11 +199,15 @@ export function useEngine() {
         if (live.current.power && rec.suspended) void rec.resume()
       }
 
-      const settled = p.vel * p.vel < 2.5
-      const finaleNow = armed && settled && Math.abs(freq - FINAL_FREQ) <= 15
+      const finaleNow = armed && p.dwell >= FINALE_DWELL_MS && p.vel * p.vel < 14
       if (finaleNow !== live.current.finale) {
         live.current.finale = finaleNow
         dispatch({ type: 'finale', on: finaleNow })
+      }
+      const noteNow = armed && p.dwell >= FINALE_DWELL_MS * 0.8
+      if (noteNow !== live.current.note) {
+        live.current.note = noteNow
+        dispatch({ type: 'note', on: noteNow })
       }
 
       const lockedId =
@@ -240,6 +260,7 @@ export function useEngine() {
           eraseShown.current = -1
           setErasing(0)
           live.current.finale = false
+          live.current.note = false
           dead = false
           rec.retune()
           dispatch({ type: 'erase' })
@@ -284,8 +305,10 @@ export function useEngine() {
     if (!on) {
       live.current.locked = ''
       live.current.finale = false
+      live.current.note = false
       dispatch({ type: 'lock', id: null })
       dispatch({ type: 'finale', on: false })
+      dispatch({ type: 'note', on: false })
     }
     dispatch({ type: 'power', on })
   }, [])
