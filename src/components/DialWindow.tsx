@@ -4,6 +4,7 @@ import { FINALE, STATIONS } from '../data/set'
 
 type Props = {
   needle: RefObject<SVGGElement | null>
+  shade: RefObject<SVGGElement | null>
   found: Record<string, true>
   note: boolean
   silent: Set<string>
@@ -46,6 +47,7 @@ function reduceMotion() {
 
 export const DialWindow = memo(function DialWindow({
   needle,
+  shade,
   found,
   note,
   silent,
@@ -147,16 +149,18 @@ export const DialWindow = memo(function DialWindow({
             </g>
           )}
 
-          <g className="needle" ref={needle} aria-hidden="true">
+          <g className="needle-shade" ref={shade} aria-hidden="true">
             <line
-              className="needle-shadow"
-              x1={DIAL.cx + 2.2}
-              y1={DIAL.cy}
-              x2={DIAL.cx + 2.2}
-              y2={8}
+              className="shade-bar"
+              x1={DIAL.cx}
+              y1={DIAL.cy + 4}
+              x2={DIAL.cx}
+              y2={DIAL.cy - 152}
             />
-            <line className="needle-bar" x1={DIAL.cx} y1={DIAL.cy} x2={DIAL.cx} y2={8} />
-            <polygon className="needle-tip" points="170,4 172.6,14 167.4,14" />
+          </g>
+
+          <g className="needle" ref={needle} aria-hidden="true">
+            <line className="needle-bar" x1={DIAL.cx} y1={DIAL.cy} x2={DIAL.cx} y2={6} />
           </g>
 
           {marks.map((m) =>

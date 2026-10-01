@@ -57,6 +57,7 @@ export function useEngine() {
   const engine = useRef<Receiver | null>(null)
 
   const needle = useRef<SVGGElement | null>(null)
+  const shade = useRef<SVGGElement | null>(null)
   const lamp = useRef<HTMLDivElement | null>(null)
   const speaker = useRef<HTMLDivElement | null>(null)
   const knob = useRef<HTMLDivElement | null>(null)
@@ -236,10 +237,14 @@ export function useEngine() {
         dispatch({ type: 'discover', id: lockedId })
       }
 
+      const swing = p.angle + wobble * 1.4
       if (needle.current) {
-        needle.current.setAttribute(
+        needle.current.setAttribute('transform', `rotate(${swing.toFixed(3)} ${DIAL.cx} ${DIAL.cy})`)
+      }
+      if (shade.current) {
+        shade.current.setAttribute(
           'transform',
-          `rotate(${(p.angle + wobble * 1.4).toFixed(3)} ${DIAL.cx} ${DIAL.cy})`,
+          `rotate(${(swing * 0.74).toFixed(3)} ${DIAL.cx} ${DIAL.cy})`,
         )
       }
       if (!p.drag || p.drag.mode !== 'knob') {
@@ -446,6 +451,7 @@ export function useEngine() {
     silent,
     reset,
     needle,
+    shade,
     knobFace,
     lamp,
     speaker,

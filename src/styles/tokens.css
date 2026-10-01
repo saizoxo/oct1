@@ -66,6 +66,9 @@ body {
   overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
   -webkit-text-size-adjust: 100%;
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 #root {
@@ -75,6 +78,8 @@ body {
 
 button {
   font: inherit;
+  user-select: none;
+  -webkit-user-select: none;
   color: inherit;
   border: 0;
   background: none;

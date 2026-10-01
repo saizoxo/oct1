@@ -29,6 +29,8 @@ export const FINAL_FREQ = 1633
 
 export const PLATE = 'RECEIVER · 6'
 
+export const SIGNATURE = 'Shreya'
+
 export const FINALE: string[] = [
   'You know jaana?',
   'It never was about finding the songs...',

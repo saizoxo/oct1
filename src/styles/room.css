@@ -48,6 +48,13 @@
   opacity: 0.85;
 }
 
+.room-guard {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  -webkit-touch-callout: none;
+}
+
 .room-wall {
   position: absolute;
   inset: 0;

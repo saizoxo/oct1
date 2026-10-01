@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { STATIONS } from '../data/set'
+import { SIGNATURE, STATIONS } from '../data/set'
 import type { Engine } from '../radio/useEngine'
 import { DialWindow } from './DialWindow'
 import { Grille, Hardware } from './Grille'
@@ -18,6 +18,7 @@ export function Radio({ engine, plate }: Props) {
     readout,
     silent,
     needle,
+    shade,
     knobFace,
     lamp,
     speaker,
@@ -61,6 +62,7 @@ export function Radio({ engine, plate }: Props) {
 
         <DialWindow
           needle={needle}
+          shade={shade}
           found={state.found}
           note={state.note}
           silent={new Set(silent)}
@@ -90,7 +92,11 @@ export function Radio({ engine, plate }: Props) {
             <span className="readout-value">{Math.round(readout.freq)}</span>
             <span className="readout-unit">kHz</span>
             <span className="readout-name">
-              {state.locked ? (STATIONS.find((s) => s.id === state.locked)?.name ?? '') : ''}
+              {state.finale
+                ? SIGNATURE
+                : state.locked
+                  ? (STATIONS.find((s) => s.id === state.locked)?.name ?? '')
+                  : ''}
             </span>
           </div>
         </div>
@@ -112,6 +118,7 @@ export function Radio({ engine, plate }: Props) {
       </div>
 
       <div className="room-desk" aria-hidden="true" />
+      <div className="room-guard" aria-hidden="true" />
       <div className="room-vignette" aria-hidden="true" />
     </div>
   )
