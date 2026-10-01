@@ -32,9 +32,9 @@ export const PLATE = 'RECEIVER · 6'
 export const FINALE: string[] = [
   'You know jaana?',
   'It never was about finding the songs...',
-  'because the prettiest melody is our silence that burns...',
-  'I just wish we solve everything together... find solutions...',
-  'find paths that somehow at the end of the day lead to us...',
-  'I wish for that...',
-  'I love you Shreya',
+  'because the prettiest melody is our silence',
+  'that burns... I just wish we solve everything',
+  'together... find solutions... find paths that',
+  'somehow at the end of the day lead to us...',
+  'I wish for that... I love you Shreya',
 ]

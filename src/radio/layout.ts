@@ -2,7 +2,7 @@ import { BAND, FINAL_FREQ, STATIONS } from '../data/set'
 
 export const DIAL = {
   width: 340,
-  height: 186,
+  height: 196,
   cx: 170,
   cy: 274,
   r: 260,
