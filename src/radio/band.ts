@@ -17,7 +17,7 @@ export function angleToFreq(angle: number): number {
 }
 
 const smooth = (t: number) => t * t * (3 - 2 * t)
-const CAPTURE = 0.3
+const CAPTURE = 0.52
 
 export function stationLevel(dial: number, station: number): number {
   const t = clamp(1 - Math.abs(dial - station) / REACH, 0, 1)

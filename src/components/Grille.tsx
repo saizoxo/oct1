@@ -1,13 +1,13 @@
 import type { RefObject } from 'react'
 
 type Props = {
-  cone: RefObject<HTMLDivElement | null>
+  body: RefObject<HTMLDivElement | null>
 }
 
-export function Grille({ cone }: Props) {
+export function Grille({ body }: Props) {
   return (
-    <div className="grille" style={{ gridArea: 'grille' }}>
-      <div className="grille-cone" ref={cone} aria-hidden="true">
+    <div className="grille" ref={body} style={{ gridArea: 'grille' }}>
+      <div className="grille-cone" aria-hidden="true">
         <span className="grille-dustcap" />
       </div>
       <div className="grille-cloth" aria-hidden="true" />

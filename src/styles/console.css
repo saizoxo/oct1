@@ -2,7 +2,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 3.4cqw;
+  gap: 3cqw;
   min-width: 0;
   padding: 0;
 }
@@ -18,8 +18,8 @@
 .knob {
   position: relative;
   flex: 0 0 auto;
-  width: clamp(66px, 26cqw, 116px);
-  height: clamp(66px, 26cqw, 116px);
+  width: clamp(74px, 29cqw, 130px);
+  height: clamp(74px, 29cqw, 130px);
   border-radius: 50%;
   touch-action: none;
   cursor: grab;

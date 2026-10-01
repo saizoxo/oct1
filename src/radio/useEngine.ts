@@ -14,9 +14,10 @@ import { initialState, reducer } from '../state/machine'
 import { angleToFreq, clamp, jitter, readBand } from './band'
 import { angleOf } from './layout'
 
-const PLAY = 0.5
-const SPRING = 210
-const DAMP = 0.855
+const PLAY = 0.4
+const SPRING = 300
+const DAMP = 0.84
+const GEAR = 0.62
 const FINE_AFTER = 0.42
 const FINE_SENS = 0.34
 const PUBLISH_MS = 66
@@ -27,6 +28,7 @@ type Drag =
       mode: 'knob'
       pointerId: number
       base: number
+      origin: number
       last: number
       turn: number
       started: number
@@ -62,7 +64,7 @@ export function useEngine() {
 
   const needle = useRef<HTMLDivElement | null>(null)
   const lamp = useRef<HTMLDivElement | null>(null)
-  const cone = useRef<HTMLDivElement | null>(null)
+  const speaker = useRef<HTMLDivElement | null>(null)
   const knob = useRef<HTMLDivElement | null>(null)
   const knobFace = useRef<HTMLDivElement | null>(null)
   const glass = useRef<HTMLDivElement | null>(null)
@@ -74,6 +76,7 @@ export function useEngine() {
     drag: null as Drag | null,
     fineLatch: false,
     fineAmount: 1,
+    knob: BAND.sweepMin / GEAR,
     candidate: '',
     lockedSince: 0,
     published: 0,
@@ -135,7 +138,7 @@ export function useEngine() {
       const freq = angleToFreq(p.angle)
       const reading = readBand(freq, STATIONS)
       const signal = reading.level
-      const tremor = 0.04 + 0.16 * (1 - signal)
+      const tremor = 0.03 + 0.11 * (1 - signal)
       const wobble = jitter(t, tremor) * (live.current.power ? 1 : 0.3)
 
       if (reading.station && signal > 0.42) {
@@ -221,8 +224,11 @@ export function useEngine() {
           wobble * 1.4
         ).toFixed(3)}deg)`
       }
+      if (!p.drag || p.drag.mode !== 'knob') {
+        p.knob += (p.angle / GEAR - p.knob) * (1 - Math.pow(0.02, dt))
+      }
       if (knobFace.current) {
-        knobFace.current.style.transform = `rotate(${(p.angle * 4.5).toFixed(2)}deg)`
+        knobFace.current.style.transform = `rotate(${p.knob.toFixed(2)}deg)`
       }
       if (lamp.current) lamp.current.style.setProperty('--sig', signal.toFixed(3))
 
@@ -305,6 +311,7 @@ export function useEngine() {
         pointerId: e.pointerId,
         last: (Math.atan2(e.clientY - cy, e.clientX - cx) * 180) / Math.PI,
         base: phys.current.cmd,
+        origin: phys.current.knob,
         turn: 0,
         started: performance.now(),
       }
@@ -318,9 +325,14 @@ export function useEngine() {
       const cx = r.left + r.width / 2
       const cy = r.top + r.height / 2
       const here = (Math.atan2(e.clientY - cy, e.clientX - cx) * 180) / Math.PI
-      drag.turn += shortest(drag.last, here) * phys.current.fineAmount
+      drag.turn += shortest(drag.last, here)
       drag.last = here
-      phys.current.cmd = clamp(drag.base + drag.turn, BAND.sweepMin, BAND.sweepMax)
+      phys.current.knob = drag.origin + drag.turn
+      phys.current.cmd = clamp(
+        drag.base + drag.turn * GEAR * phys.current.fineAmount,
+        BAND.sweepMin,
+        BAND.sweepMax,
+      )
     },
     onKnobDoubleClick() {
       phys.current.fineLatch = !phys.current.fineLatch
@@ -421,7 +433,7 @@ export function useEngine() {
     needle,
     knobFace,
     lamp,
-    cone,
+    speaker,
     erasing,
     power,
     dial,

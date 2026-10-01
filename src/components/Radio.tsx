@@ -20,7 +20,7 @@ export function Radio({ engine, plate }: Props) {
     needle,
     knobFace,
     lamp,
-    cone,
+    speaker,
     erasing,
     power,
     dial,
@@ -95,7 +95,7 @@ export function Radio({ engine, plate }: Props) {
           </div>
         </div>
 
-        <Grille cone={cone} />
+        <Grille body={speaker} />
         <Hardware />
       </div>
 

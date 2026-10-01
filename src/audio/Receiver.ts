@@ -61,7 +61,7 @@ export class Receiver {
     this.ctx = ctx
 
     const shaper = ctx.createWaveShaper()
-    shaper.curve = driveCurve(1.3)
+    shaper.curve = driveCurve(1.6)
     shaper.oversample = '2x'
     this.shaper = shaper
 
@@ -72,7 +72,7 @@ export class Receiver {
 
     const cone = ctx.createBiquadFilter()
     cone.type = 'lowpass'
-    cone.frequency.value = 4600
+    cone.frequency.value = 4200
     cone.Q.value = 0.6
 
     const cone2 = ctx.createBiquadFilter()
@@ -138,7 +138,7 @@ export class Receiver {
     this.noiseFilter = noiseFilter
 
     const noiseGain = ctx.createGain()
-    noiseGain.gain.value = 0.085
+    noiseGain.gain.value = 0.105
     this.noiseGain = noiseGain
 
     noise.connect(noiseFilter)
@@ -248,7 +248,7 @@ export class Receiver {
       master.setValueAtTime(master.value, now)
       master.linearRampToValueAtTime(0.82, now + 0.55)
       this.humGain.gain.setValueAtTime(0, now)
-      this.humGain.gain.linearRampToValueAtTime(0.017, now + 2.6)
+      this.humGain.gain.linearRampToValueAtTime(0.021, now + 2.6)
       this.speaker.frequency.cancelScheduledValues(now)
       this.speaker.frequency.setValueAtTime(140, now)
       this.speaker.frequency.linearRampToValueAtTime(235, now + 1.8)
@@ -311,21 +311,21 @@ export class Receiver {
     if (!ctx || !nf || !ng) return
     const now = ctx.currentTime
     const hiss = dead ? 0.42 : 1
-    ramp(nf.frequency, 620 + 1500 * signal, 0.05, now)
-    ramp(nf.Q, 0.5 + 2.6 * signal, 0.06, now)
-    ramp(ng.gain, 0.085 * hiss * (1 - 0.5 * signal), 0.07, now)
+    ramp(nf.frequency, 620 + 1500 * signal, 0.07, now)
+    ramp(nf.Q, 0.5 + 2.6 * signal, 0.08, now)
+    ramp(ng.gain, 0.105 * hiss * (1 - 0.62 * signal), 0.1, now)
     if (this.carrierA && this.carrierB && this.carrierGain) {
       const whistle = Math.sin(Math.PI * Math.min(1, Math.max(0, miss)))
       const f = 620 + 780 * miss * miss
       ramp(this.carrierA.frequency, f, 0.06, now)
       ramp(this.carrierB.frequency, f * 2.01, 0.06, now)
-      ramp(this.carrierGain.gain, 0.026 * whistle * hiss, 0.07, now)
+      ramp(this.carrierGain.gain, 0.03 * whistle * hiss, 0.09, now)
     }
 
     if (dead) this.nextCrackle = now + 0.5
     else if (now > this.nextCrackle) {
       this.pop(now, 0.05 + miss * 0.22)
-      this.nextCrackle = now + 0.06 + Math.random() * (0.5 + miss * 1.1)
+      this.nextCrackle = now + 0.04 + Math.random() * (0.4 + miss * 0.9)
     }
   }
 
@@ -380,9 +380,9 @@ export class Receiver {
     const now = ctx.currentTime
     if (now > this.wowAt) {
       this.wowAt = now + 0.18
-      const target = 0.9975 + Math.random() * 0.005
+      const target = 0.997 + Math.random() * 0.006
       voiceWow.set(id, (voiceWow.get(id) ?? 1) * 0.86 + target * 0.14)
-      voice.el.playbackRate = Math.min(1.01, Math.max(0.99, voiceWow.get(id)!))
+      voice.el.playbackRate = Math.min(1.012, Math.max(0.988, voiceWow.get(id)!))
     }
     const open = level > 0.035
     voice.wanted = open
@@ -397,9 +397,9 @@ export class Receiver {
       return
     }
     const curve = Math.pow(level, 1.3)
-    ramp(voice.gain.gain, curve * 0.92, 0.06, now)
-    ramp(voice.filter.frequency, 1000 + 1300 * level, 0.08, now)
-    ramp(voice.filter.Q, 0.85 - 0.55 * level, 0.08, now)
+    ramp(voice.gain.gain, curve * 0.95, 0.1, now)
+    ramp(voice.filter.frequency, 900 + 1500 * level, 0.11, now)
+    ramp(voice.filter.Q, 1.05 - 0.75 * level, 0.11, now)
   }
 
   detent(): void {
