@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { STATIONS } from '../data/set'
 import type { Engine } from '../radio/useEngine'
 import { DialWindow } from './DialWindow'
@@ -13,8 +13,31 @@ type Props = {
 }
 
 export function Radio({ engine, plate }: Props) {
-  const { state, readout, silent, needle, knobFace, lamp, cone, erasing, power, dial, holdErase } =
-    engine
+  const {
+    state,
+    readout,
+    silent,
+    needle,
+    knobFace,
+    lamp,
+    cone,
+    erasing,
+    power,
+    dial,
+    holdErase,
+    reset,
+  } = engine
+
+  const [firstRun, setFirstRun] = useState(true)
+  useEffect(() => {
+    const fade = window.setTimeout(() => setFirstRun(false), 3000)
+    const drop = () => setFirstRun(false)
+    window.addEventListener('pointerdown', drop, { once: true })
+    return () => {
+      window.clearTimeout(fade)
+      window.removeEventListener('pointerdown', drop)
+    }
+  }, [])
 
   const armed = useMemo(
     () => Object.keys(state.found).length >= STATIONS.length,
@@ -31,6 +54,7 @@ export function Radio({ engine, plate }: Props) {
           power={state.power}
           onPower={() => void power(!state.power)}
           holdErase={holdErase}
+          onReset={reset}
           erasing={erasing}
           plate={plate}
         />
@@ -73,6 +97,18 @@ export function Radio({ engine, plate }: Props) {
 
         <Grille cone={cone} />
         <Hardware />
+      </div>
+
+      <div className={'first-run' + (firstRun ? ' is-on' : '')} aria-hidden="true">
+        <span>
+          <i>↑</i> click to turn on
+        </span>
+        <span>
+          <i>↑</i> hold and rotate to fine tune
+        </span>
+        <span>
+          <i>↑</i> hold reset to wipe
+        </span>
       </div>
 
       <div className="room-desk" aria-hidden="true" />

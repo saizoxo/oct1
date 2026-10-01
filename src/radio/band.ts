@@ -17,30 +17,35 @@ export function angleToFreq(angle: number): number {
 }
 
 const smooth = (t: number) => t * t * (3 - 2 * t)
+const CAPTURE = 0.3
 
 export function stationLevel(dial: number, station: number): number {
-  return smooth(clamp(1 - Math.abs(dial - station) / REACH, 0, 1))
+  const t = clamp(1 - Math.abs(dial - station) / REACH, 0, 1)
+  return smooth(clamp(t / CAPTURE, 0, 1))
 }
 
 export type BandReading = {
   level: number
   station: string | null
+  at: number
   offset: number
 }
 
 export function readBand(dial: number, stations: readonly { id: string; kHz: number }[]): BandReading {
   let level = 0
   let station: string | null = null
+  let at = 0
   let offset = 0
   for (const s of stations) {
     const l = stationLevel(dial, s.kHz)
     if (l > level) {
       level = l
       station = s.id
+      at = s.kHz
       offset = dial - s.kHz
     }
   }
-  return { level, station, offset }
+  return { level, station, at, offset }
 }
 
 const JITTER_SEED = 20260614

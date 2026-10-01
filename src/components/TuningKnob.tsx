@@ -49,9 +49,9 @@ export function TuningKnob({
         onKeyDown={onKeyDown}
       >
         <div className="knob-collar" />
-        <div className="knob-body">
+        <div className="knob-body" ref={knobFace}>
           <div className="knob-flutes" />
-          <div className="knob-face" ref={knobFace}>
+          <div className="knob-face">
             <span className="knob-index" />
           </div>
           <div className="knob-dimple" />

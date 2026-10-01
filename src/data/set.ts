@@ -12,16 +12,16 @@ export const BAND = {
   sweepMax: 40,
 }
 
-export const REACH = 42
-export const LOCK_LEVEL = 0.8
-export const LOCK_HOLD_MS = 420
+export const REACH = 58
+export const LOCK_LEVEL = 0.78
+export const LOCK_HOLD_MS = 340
 
 export const STATIONS: Station[] = [
-  { id: 's1', kHz: 636, name: 'HOME', audio: 'tracks/one.mp3' },
-  { id: 's2', kHz: 758, name: 'TERRACE', audio: 'tracks/two.mp3' },
-  { id: 's3', kHz: 903, name: 'RAIN', audio: 'tracks/three.mp3' },
+  { id: 's1', kHz: 636, name: 'TERRACE', audio: 'tracks/one.mp3' },
+  { id: 's2', kHz: 758, name: 'HOME', audio: 'tracks/two.mp3' },
+  { id: 's3', kHz: 903, name: 'DETOUR', audio: 'tracks/three.mp3' },
   { id: 's4', kHz: 1071, name: '3AM', audio: 'tracks/four.mp3' },
-  { id: 's5', kHz: 1246, name: 'DETOUR', audio: 'tracks/five.mp3' },
+  { id: 's5', kHz: 1246, name: 'RAIN', audio: 'tracks/five.mp3' },
   { id: 's6', kHz: 1468, name: 'QUIET', audio: 'tracks/six.mp3' },
 ]
 

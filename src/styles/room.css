@@ -1,14 +1,51 @@
 .room {
   position: relative;
   flex: 1;
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2.6cqw;
   overflow: hidden;
   padding: max(12px, env(safe-area-inset-top)) 12px max(14px, env(safe-area-inset-bottom));
   background:
     radial-gradient(120% 78% at 50% 6%, #2b1f13 0%, #191209 46%, var(--room-0) 100%),
     var(--room-0);
   isolation: isolate;
+}
+
+.first-run {
+  display: flex;
+  gap: 3.2cqw;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 92%;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: rgba(226, 200, 158, 0.9);
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition: opacity 800ms var(--ease), transform 800ms var(--ease);
+}
+
+.first-run.is-on {
+  opacity: 0.42;
+  transform: none;
+  transition-duration: 220ms;
+}
+
+.first-run span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.first-run i {
+  font-style: normal;
+  font-size: 11px;
+  opacity: 0.85;
 }
 
 .room-wall {
@@ -79,12 +116,12 @@
   max-height: 100%;
   overflow: hidden;
   display: grid;
-  grid-template-columns: 1.5fr 0.86fr;
+  grid-template-columns: 0.86fr 1.5fr;
   grid-template-rows: auto auto minmax(0, 1fr);
   grid-template-areas:
-    'deck   deck'
-    'dial   grille'
-    'console grille';
+    'grille   deck'
+    'grille   dial'
+    'grille   console';
   gap: 2.6cqw 2.8cqw;
   padding: 3.4cqw 4cqw 3.6cqw;
   border-radius: 7cqw 7cqw 4.6cqw 4.6cqw;
@@ -158,7 +195,7 @@
     width: min(100%, 760px, calc((100dvh - 1.4rem) * 1.62));
     aspect-ratio: 1.62;
     border-radius: 4cqw;
-    grid-template-columns: 1.42fr 0.9fr;
+    grid-template-columns: 0.9fr 1.42fr;
     gap: 2cqw 2.4cqw;
     padding: 2.4cqw 3cqw 2.6cqw;
   }

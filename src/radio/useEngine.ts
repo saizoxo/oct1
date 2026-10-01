@@ -12,6 +12,7 @@ import { Receiver } from '../audio/Receiver'
 import { BAND, FINAL_FREQ, LOCK_HOLD_MS, LOCK_LEVEL, STATIONS } from '../data/set'
 import { initialState, reducer } from '../state/machine'
 import { angleToFreq, clamp, jitter, readBand } from './band'
+import { angleOf } from './layout'
 
 const PLAY = 0.5
 const SPRING = 210
@@ -22,7 +23,14 @@ const PUBLISH_MS = 66
 const ERASE_MS = 900
 
 type Drag =
-  | { mode: 'knob'; pointerId: number; from: number; base: number; started: number }
+  | {
+      mode: 'knob'
+      pointerId: number
+      base: number
+      last: number
+      turn: number
+      started: number
+    }
   | { mode: 'glass'; pointerId: number; x: number; base: number; started: number }
 
 export type Readout = {
@@ -69,6 +77,11 @@ export function useEngine() {
     candidate: '',
     lockedSince: 0,
     published: 0,
+    mark: 0,
+    audit: 0,
+    side: STATIONS.map((s) => (BAND.min < s.kHz ? 0 : 1)),
+    pump: 0,
+    sway: 0,
   })
 
   const mirror = useRef({ found: state.found, finale: state.finale })
@@ -122,8 +135,17 @@ export function useEngine() {
       const freq = angleToFreq(p.angle)
       const reading = readBand(freq, STATIONS)
       const signal = reading.level
-      const tremor = 0.05 + 0.22 * (1 - signal)
+      const tremor = 0.04 + 0.16 * (1 - signal)
       const wobble = jitter(t, tremor) * (live.current.power ? 1 : 0.3)
+
+      if (reading.station && signal > 0.42) {
+        const home = angleOf(reading.at)
+        const gap = home - p.angle
+        if (Math.abs(gap) < 3.4) {
+          const grip = (signal - 0.42) / 0.58
+          p.cmd += gap * grip * (p.drag ? 0.05 : 0.16) * (dt * 60)
+        }
+      }
 
       const armed =
         live.current.power && Object.keys(mirror.current.found).length >= STATIONS.length
@@ -138,7 +160,27 @@ export function useEngine() {
 
       rec.tune(signal, 1 - signal, dead)
       for (const s of STATIONS) {
-        rec.voiceLevel(s.id, dead ? 0 : reading.station === s.id ? signal : 0)
+        rec.voiceLevel(s.id, reading.station === s.id ? signal : 0)
+      }
+
+      if (live.current.power) {
+        const mark = Math.floor(freq / 100)
+        if (mark !== p.mark) {
+          p.mark = mark
+          rec.detent()
+        }
+        for (let i = 0; i < STATIONS.length; i++) {
+          const side = freq >= STATIONS[i]!.kHz ? 1 : 0
+          if (side !== p.side[i]) {
+            if (Math.abs(freq - STATIONS[i]!.kHz) < 34) rec.detent()
+            p.side[i] = side
+          }
+        }
+      }
+
+      if (now - p.audit > 2000) {
+        p.audit = now
+        if (live.current.power && rec.suspended) void rec.resume()
       }
 
       const settled = p.vel * p.vel < 2.5
@@ -180,7 +222,7 @@ export function useEngine() {
         ).toFixed(3)}deg)`
       }
       if (knobFace.current) {
-        knobFace.current.style.transform = `rotate(${(p.angle * 3.4).toFixed(2)}deg)`
+        knobFace.current.style.transform = `rotate(${(p.angle * 4.5).toFixed(2)}deg)`
       }
       if (lamp.current) lamp.current.style.setProperty('--sig', signal.toFixed(3))
 
@@ -261,8 +303,9 @@ export function useEngine() {
       phys.current.drag = {
         mode: 'knob',
         pointerId: e.pointerId,
-        from: (Math.atan2(e.clientY - cy, e.clientX - cx) * 180) / Math.PI,
+        last: (Math.atan2(e.clientY - cy, e.clientX - cx) * 180) / Math.PI,
         base: phys.current.cmd,
+        turn: 0,
         started: performance.now(),
       }
     },
@@ -275,12 +318,9 @@ export function useEngine() {
       const cx = r.left + r.width / 2
       const cy = r.top + r.height / 2
       const here = (Math.atan2(e.clientY - cy, e.clientX - cx) * 180) / Math.PI
-      const turn = shortest(drag.from, here)
-      phys.current.cmd = clamp(
-        drag.base + turn * phys.current.fineAmount,
-        BAND.sweepMin,
-        BAND.sweepMax,
-      )
+      drag.turn += shortest(drag.last, here) * phys.current.fineAmount
+      drag.last = here
+      phys.current.cmd = clamp(drag.base + drag.turn, BAND.sweepMin, BAND.sweepMax)
     },
     onKnobDoubleClick() {
       phys.current.fineLatch = !phys.current.fineLatch
@@ -356,9 +396,10 @@ export function useEngine() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement | null
-      if (el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) return
+      if (el && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.closest('button,[role="slider"]'))) {
+        return
+      }
       if (e.key === ' ' || e.key === 'Enter') {
-        if (el && el !== document.body && el.dataset?.focusable === 'true') return
         e.preventDefault()
         void power(!live.current.power)
       }
@@ -367,10 +408,16 @@ export function useEngine() {
     return () => window.removeEventListener('keydown', onKey)
   }, [power])
 
+  const reset = useCallback(() => {
+    phys.current.cmd = BAND.sweepMin
+    engine.current?.rewind()
+  }, [])
+
   return {
     state,
     readout,
     silent,
+    reset,
     needle,
     knobFace,
     lamp,

@@ -10,6 +10,13 @@ type Voice = {
 }
 
 const NOISE_SECONDS = 3
+const QUIET = 0.0015
+const voiceWow = new Map<string, number>()
+
+const ramp = (p: AudioParam, v: number, tc: number, now: number) => {
+  if (Math.abs(p.value - v) < QUIET) return
+  p.setTargetAtTime(v, now, tc)
+}
 
 function driveCurve(amount: number): Float32Array<ArrayBuffer> {
   const n = 2048
@@ -38,9 +45,11 @@ export class Receiver {
   private running = false
   private disposed = false
   onVoiceFail: ((id: string) => void) | null = null
+  private nextCrackle = 0
+  private wowAt = 0
 
-  get dead(): boolean {
-    return this.disposed
+  get suspended(): boolean {
+    return this.ctx !== null && this.ctx.state !== 'running'
   }
 
   async boot(voices: { id: string; audio: string }[]): Promise<void> {
@@ -52,29 +61,45 @@ export class Receiver {
     this.ctx = ctx
 
     const shaper = ctx.createWaveShaper()
-    shaper.curve = driveCurve(1.9)
+    shaper.curve = driveCurve(1.3)
     shaper.oversample = '2x'
     this.shaper = shaper
 
     const speaker = ctx.createBiquadFilter()
     speaker.type = 'highpass'
-    speaker.frequency.value = 235
+    speaker.frequency.value = 255
     this.speaker = speaker
+
+    const cone = ctx.createBiquadFilter()
+    cone.type = 'lowpass'
+    cone.frequency.value = 4600
+    cone.Q.value = 0.6
+
+    const cone2 = ctx.createBiquadFilter()
+    cone2.type = 'lowpass'
+    cone2.frequency.value = 5400
+    cone2.Q.value = 0.6
+
+    const body = ctx.createBiquadFilter()
+    body.type = 'peaking'
+    body.frequency.value = 1250
+    body.Q.value = 0.7
+    body.gain.value = 2.6
 
     const presence = ctx.createBiquadFilter()
     presence.type = 'peaking'
-    presence.frequency.value = 2650
-    presence.Q.value = 0.9
-    presence.gain.value = 3.2
+    presence.frequency.value = 3600
+    presence.Q.value = 0.8
+    presence.gain.value = -3.4
 
     const master = ctx.createGain()
     master.gain.value = 0
     this.master = master
 
     const limiter = ctx.createDynamicsCompressor()
-    limiter.threshold.value = -14
-    limiter.knee.value = 8
-    limiter.ratio.value = 14
+    limiter.threshold.value = -11
+    limiter.knee.value = 10
+    limiter.ratio.value = 9
     limiter.attack.value = 0.004
     limiter.release.value = 0.22
 
@@ -85,7 +110,10 @@ export class Receiver {
     this.meter = new Uint8Array(new ArrayBuffer(analyser.fftSize))
 
     shaper.connect(speaker)
-    speaker.connect(presence)
+    speaker.connect(cone)
+    cone.connect(cone2)
+    cone2.connect(body)
+    body.connect(presence)
     presence.connect(master)
     master.connect(limiter)
     limiter.connect(analyser)
@@ -110,7 +138,7 @@ export class Receiver {
     this.noiseFilter = noiseFilter
 
     const noiseGain = ctx.createGain()
-    noiseGain.gain.value = 0.12
+    noiseGain.gain.value = 0.085
     this.noiseGain = noiseGain
 
     noise.connect(noiseFilter)
@@ -167,6 +195,8 @@ export class Receiver {
     el.src = src
     el.preload = 'auto'
     el.crossOrigin = 'anonymous'
+    el.loop = true
+    voiceWow.set(id, 1)
     const voice: Voice = {
       el,
       input: ctx.createMediaElementSource(el),
@@ -216,7 +246,7 @@ export class Receiver {
     if (on) {
       master.cancelScheduledValues(now)
       master.setValueAtTime(master.value, now)
-      master.linearRampToValueAtTime(0.9, now + 0.55)
+      master.linearRampToValueAtTime(0.82, now + 0.55)
       this.humGain.gain.setValueAtTime(0, now)
       this.humGain.gain.linearRampToValueAtTime(0.017, now + 2.6)
       this.speaker.frequency.cancelScheduledValues(now)
@@ -280,16 +310,53 @@ export class Receiver {
     const ng = this.noiseGain
     if (!ctx || !nf || !ng) return
     const now = ctx.currentTime
-    const hiss = dead ? 0 : 1
-    nf.frequency.setTargetAtTime(760 + 2500 * signal, now, 0.05)
-    nf.Q.setTargetAtTime(0.7 + 4.2 * signal, now, 0.06)
-    ng.gain.setTargetAtTime(0.125 * hiss * (1 - 0.58 * signal), now, 0.07)
+    const hiss = dead ? 0.42 : 1
+    ramp(nf.frequency, 620 + 1500 * signal, 0.05, now)
+    ramp(nf.Q, 0.5 + 2.6 * signal, 0.06, now)
+    ramp(ng.gain, 0.085 * hiss * (1 - 0.5 * signal), 0.07, now)
     if (this.carrierA && this.carrierB && this.carrierGain) {
       const whistle = Math.sin(Math.PI * Math.min(1, Math.max(0, miss)))
-      const f = 1250 + 1900 * miss * miss
-      this.carrierA.frequency.setTargetAtTime(f, now, 0.06)
-      this.carrierB.frequency.setTargetAtTime(f * 2.01, now, 0.06)
-      this.carrierGain.gain.setTargetAtTime(0.05 * whistle * hiss, now, 0.07)
+      const f = 620 + 780 * miss * miss
+      ramp(this.carrierA.frequency, f, 0.06, now)
+      ramp(this.carrierB.frequency, f * 2.01, 0.06, now)
+      ramp(this.carrierGain.gain, 0.026 * whistle * hiss, 0.07, now)
+    }
+
+    if (dead) this.nextCrackle = now + 0.5
+    else if (now > this.nextCrackle) {
+      this.pop(now, 0.05 + miss * 0.22)
+      this.nextCrackle = now + 0.06 + Math.random() * (0.5 + miss * 1.1)
+    }
+  }
+
+  private pop(now: number, size: number): void {
+    const ctx = this.ctx
+    const shaper = this.shaper
+    if (!ctx || !shaper) return
+    const length = Math.max(64, Math.floor(ctx.sampleRate * (0.004 + size * 0.02)))
+    const buffer = ctx.createBuffer(1, length, ctx.sampleRate)
+    const data = buffer.getChannelData(0)
+    for (let i = 0; i < length; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 5)
+    }
+    const src = ctx.createBufferSource()
+    src.buffer = buffer
+    const bp = ctx.createBiquadFilter()
+    bp.type = 'bandpass'
+    bp.frequency.value = 700 + Math.random() * 2600
+    bp.Q.value = 1.1
+    const g = ctx.createGain()
+    g.gain.value = 0.1 + Math.random() * 0.16
+    src.connect(bp)
+    bp.connect(g)
+    g.connect(shaper)
+    src.start(now)
+  }
+
+  rewind(): void {
+    for (const voice of this.voices.values()) {
+      if (!voice.failed) voice.el.currentTime = 0
+      voice.el.pause()
     }
   }
 
@@ -311,6 +378,12 @@ export class Receiver {
     const voice = this.voices.get(id)
     if (!voice || !ctx) return
     const now = ctx.currentTime
+    if (now > this.wowAt) {
+      this.wowAt = now + 0.18
+      const target = 0.9975 + Math.random() * 0.005
+      voiceWow.set(id, (voiceWow.get(id) ?? 1) * 0.86 + target * 0.14)
+      voice.el.playbackRate = Math.min(1.01, Math.max(0.99, voiceWow.get(id)!))
+    }
     const open = level > 0.035
     voice.wanted = open
     if (open) {
@@ -320,13 +393,13 @@ export class Receiver {
       voice.el.pause()
     }
     if (voice.failed) {
-      voice.gain.gain.setTargetAtTime(0, now, 0.04)
+      ramp(voice.gain.gain, 0, 0.04, now)
       return
     }
     const curve = Math.pow(level, 1.3)
-    voice.gain.gain.setTargetAtTime(curve * 0.95, now, 0.06)
-    voice.filter.frequency.setTargetAtTime(1100 + 1400 * level, now, 0.08)
-    voice.filter.Q.setTargetAtTime(0.9 - 0.62 * level, now, 0.08)
+    ramp(voice.gain.gain, curve * 0.92, 0.06, now)
+    ramp(voice.filter.frequency, 1000 + 1300 * level, 0.08, now)
+    ramp(voice.filter.Q, 0.85 - 0.55 * level, 0.08, now)
   }
 
   detent(): void {
