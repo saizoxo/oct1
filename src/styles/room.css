@@ -112,11 +112,12 @@
   container-type: inline-size;
   container-name: cabinet;
   width: min(100%, 430px, calc((100dvh - 1.9rem) * 0.94));
+  max-width: 430px;
   aspect-ratio: 0.94;
   max-height: 100%;
   overflow: hidden;
   display: grid;
-  grid-template-columns: 0.84fr 1.5fr;
+  grid-template-columns: 0.7fr 1.5fr;
   grid-template-rows: auto auto minmax(0, 1fr);
   grid-template-areas:
     'grille   deck'
@@ -192,27 +193,37 @@
     padding: 10px 14px;
   }
   .cabinet {
-    width: min(100%, 760px, calc((100dvh - 1.4rem) * 1.62));
-    aspect-ratio: 1.62;
+    width: min(100%, 700px, calc((100dvh - 1.4rem) * 1.5));
+    max-width: 700px;
+    aspect-ratio: 1.5;
     border-radius: 4cqw;
-    grid-template-columns: 0.9fr 1.42fr;
-    gap: 2cqw 2.4cqw;
+    grid-template-columns: 0.72fr 1.5fr;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    gap: 1.8cqw 2.2cqw;
     padding: 2.4cqw 3cqw 2.6cqw;
   }
   .cabinet .dial-glass .dial-card {
-    max-width: 300px;
+    max-width: 232px;
   }
   .console {
-    gap: 2cqw;
+    gap: 1.6cqw;
   }
   .knob {
-    width: clamp(58px, 21cqw, 96px);
-    height: clamp(58px, 21cqw, 96px);
+    width: clamp(52px, 18cqw, 84px);
+    height: clamp(52px, 18cqw, 84px);
   }
   .knob-hint {
     display: none;
   }
   .hardware {
     display: none;
+  }
+}
+
+@media (orientation: landscape) and (min-height: 621px) {
+  .cabinet {
+    width: min(100%, 560px, calc((100dvh - 2.4rem) * 1.34));
+    max-width: 560px;
+    aspect-ratio: 1.34;
   }
 }
