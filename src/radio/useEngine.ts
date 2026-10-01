@@ -154,11 +154,13 @@ export function useEngine() {
       const tremor = 0.005 + 0.13 * (1 - carrier)
       const wobble = jitter(t, tremor) * (live.current.power ? 1 : 0.3)
 
-      if (carrier > 0.3 && reading.station !== null) {
+      if (carrier > 0.3) {
         const gap = angleOf(home) - p.angle
         if (Math.abs(gap) < 4.6) {
           const grip = (carrier - 0.3) / 0.7
-          p.cmd += gap * grip * (p.drag ? 0.1 : 0.3) * (dt * 60)
+          const pull = gap * GEAR * grip * (p.drag ? 0.06 : 0.18) * (dt * 60)
+          p.knob = clamp(p.knob + pull, KNOB_MIN, KNOB_MAX)
+          p.cmd = clamp(p.knob * GEAR, BAND.sweepMin, BAND.sweepMax)
         }
       }
 
