@@ -116,7 +116,7 @@
   max-height: 100%;
   overflow: hidden;
   display: grid;
-  grid-template-columns: 0.86fr 1.5fr;
+  grid-template-columns: 0.84fr 1.5fr;
   grid-template-rows: auto auto minmax(0, 1fr);
   grid-template-areas:
     'grille   deck'
