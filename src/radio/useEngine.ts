@@ -137,33 +137,32 @@ export function useEngine() {
       const freq = angleToFreq(p.angle)
       const reading = readBand(freq, STATIONS)
       const signal = reading.level
-      p.crisp += (clamp((signal - 0.14) / 0.5, 0, 1) - p.crisp) * (1 - Math.pow(0.002, dt))
-      const tremor = 0.005 + 0.13 * (1 - signal)
-      const wobble = jitter(t, tremor) * (live.current.power ? 1 : 0.3)
 
       const armed =
         live.current.power && Object.keys(mirror.current.found).length >= STATIONS.length
 
-      let carrier = 0
-      if (signal > 0.3) carrier = signal
       const finalGap = FINAL_FREQ - freq
-      if (armed && Math.abs(finalGap) < 22 && Math.abs(finalGap) < Math.abs(carrier * 1000 - finalGap)) {
-        carrier = Math.max(carrier, 1 - Math.abs(finalGap) / 22)
-        p.dwell += dt * 1000
-      } else {
-        p.dwell = 0
-      }
+      const finaleWins =
+        armed &&
+        Math.abs(finalGap) < 24 &&
+        (!reading.station || Math.abs(finalGap) < Math.abs(reading.offset) || signal <= 0.3)
 
-      if (carrier > 0.3) {
-        const home = angleOf(
-          armed && p.dwell > 0 ? FINAL_FREQ : reading.at,
-        )
-        const gap = home - p.angle
+      const carrier = finaleWins ? 1 - Math.abs(finalGap) / 24 : signal
+      const home = finaleWins ? FINAL_FREQ : reading.at
+
+      p.crisp += (clamp((carrier - 0.14) / 0.5, 0, 1) - p.crisp) * (1 - Math.pow(0.002, dt))
+      const tremor = 0.005 + 0.13 * (1 - carrier)
+      const wobble = jitter(t, tremor) * (live.current.power ? 1 : 0.3)
+
+      if (carrier > 0.3 && reading.station !== null) {
+        const gap = angleOf(home) - p.angle
         if (Math.abs(gap) < 4.6) {
           const grip = (carrier - 0.3) / 0.7
           p.cmd += gap * grip * (p.drag ? 0.1 : 0.3) * (dt * 60)
         }
       }
+
+      p.dwell = armed && Math.abs(freq - FINAL_FREQ) <= 2.5 ? p.dwell + dt * 1000 : 0
 
       if (armed && !mirror.current.finale) {
         if (!dead) {
