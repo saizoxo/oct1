@@ -1,0 +1,108 @@
+@property --sig {
+  syntax: '<number>';
+  initial-value: 0;
+  inherits: true;
+}
+
+@property --fill {
+  syntax: '<number>';
+  initial-value: 0;
+  inherits: true;
+}
+
+:root {
+  --room-0: #0b0805;
+  --room-1: #17110b;
+  --room-2: #241a10;
+
+  --cab-hi: #ead4ac;
+  --cab: #c9a87c;
+  --cab-mid: #a9885f;
+  --cab-lo: #74593b;
+  --cab-deep: #2f2519;
+
+  --ink: #4a3a26;
+  --ink-soft: #7a6446;
+  --paper: #ece0c3;
+  --paper-mid: #ddcda6;
+  --paper-lo: #b8a37c;
+
+  --needle: #c2452b;
+  --needle-lo: #7e2a19;
+
+  --lamp-core: #ffe0ac;
+  --lamp: #ffb85e;
+  --lamp-edge: #c2701f;
+
+  --chrome-hi: #f7f3ea;
+  --chrome: #b8b1a3;
+  --chrome-mid: #8c8579;
+  --chrome-lo: #4c4740;
+
+  --sans: ui-sans-serif, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --mono: ui-monospace, 'SF Mono', 'Roboto Mono', Menlo, Consolas, monospace;
+  --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --press: 90ms;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--room-0);
+  font-family: var(--sans);
+  color: var(--paper);
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
+
+#root {
+  display: flex;
+  min-height: 100dvh;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+:focus-visible {
+  outline: 2px solid var(--lamp);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.engraved {
+  color: rgba(52, 38, 24, 0.68);
+  text-shadow: 0 1px 0 rgba(255, 244, 220, 0.34);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: 8px;
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 1ms !important;
+    animation-duration: 1ms !important;
+  }
+}
