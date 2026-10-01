@@ -4,6 +4,7 @@
   place-items: center;
   min-height: 0;
   max-width: 100%;
+  overflow: hidden;
   border-radius: 1.8cqw;
   padding: 2.2cqw;
   background: linear-gradient(180deg, #6d5334 0%, #4a3720 100%);
@@ -18,6 +19,7 @@
 .dial-card {
   position: relative;
   width: 100%;
+  max-width: 216px;
   overflow: hidden;
   border-radius: 3px;
   background:
