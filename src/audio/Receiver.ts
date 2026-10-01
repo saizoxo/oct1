@@ -47,6 +47,7 @@ export class Receiver {
   private running = false
   private disposed = false
   onVoiceFail: ((id: string) => void) | null = null
+  private idleTimer: number | null = null
   private nextCrackle = 0
   private wowAt = 0
 
@@ -203,7 +204,6 @@ export class Receiver {
     const el = new Audio()
     el.src = src
     el.preload = 'auto'
-    el.crossOrigin = 'anonymous'
     el.loop = true
     voiceWow.set(id, 1)
     const voice: Voice = {
@@ -251,6 +251,10 @@ export class Receiver {
     if (!ctx || !this.master || !this.humGain || !this.speaker) return
     const now = ctx.currentTime
     this.running = on
+    if (this.idleTimer !== null) {
+      window.clearTimeout(this.idleTimer)
+      this.idleTimer = null
+    }
     const master = this.master.gain
     if (on) {
       master.cancelScheduledValues(now)
@@ -274,6 +278,10 @@ export class Receiver {
       this.speaker.frequency.setValueAtTime(this.speaker.frequency.value, now)
       this.speaker.frequency.exponentialRampToValueAtTime(90, now + 0.26)
       for (const voice of this.voices.values()) voice.el.pause()
+      this.idleTimer = window.setTimeout(() => {
+        this.idleTimer = null
+        if (!this.running && this.ctx && this.ctx.state === 'running') void this.ctx.suspend()
+      }, 340)
     }
   }
 
