@@ -12,7 +12,7 @@ import { Receiver } from '../audio/Receiver'
 import { BAND, FINAL_FREQ, LOCK_HOLD_MS, LOCK_LEVEL, STATIONS } from '../data/set'
 import { initialState, reducer } from '../state/machine'
 import { angleToFreq, clamp, jitter, readBand } from './band'
-import { angleOf } from './layout'
+import { DIAL, angleOf } from './layout'
 
 const PLAY = 0.4
 const KNOB_SPAN = 360
@@ -56,7 +56,7 @@ export function useEngine() {
 
   const engine = useRef<Receiver | null>(null)
 
-  const needle = useRef<HTMLDivElement | null>(null)
+  const needle = useRef<SVGGElement | null>(null)
   const lamp = useRef<HTMLDivElement | null>(null)
   const speaker = useRef<HTMLDivElement | null>(null)
   const knob = useRef<HTMLDivElement | null>(null)
@@ -237,10 +237,10 @@ export function useEngine() {
       }
 
       if (needle.current) {
-        needle.current.style.transform = `translateX(-50%) rotate(${(
-          p.angle +
-          wobble * 1.4
-        ).toFixed(3)}deg)`
+        needle.current.setAttribute(
+          'transform',
+          `rotate(${(p.angle + wobble * 1.4).toFixed(3)} ${DIAL.cx} ${DIAL.cy})`,
+        )
       }
       if (!p.drag || p.drag.mode !== 'knob') {
         p.knob = clamp(p.cmd, BAND.sweepMin, BAND.sweepMax) / GEAR

@@ -3,7 +3,7 @@ import { DIAL, DIAL_TICKS, clampX, finalMark, stationMarks } from '../radio/layo
 import { FINALE, STATIONS } from '../data/set'
 
 type Props = {
-  needle: RefObject<HTMLDivElement | null>
+  needle: RefObject<SVGGElement | null>
   found: Record<string, true>
   note: boolean
   silent: Set<string>
@@ -84,7 +84,7 @@ export const DialWindow = memo(function DialWindow({
       onPointerUp={onUp}
       onPointerCancel={onUp}
     >
-      <div className="dial-card" style={{ aspectRatio: `${DIAL.width}/${DIAL.height}` }}>
+      <div className="dial-card">
         <svg
           className={'dial-print' + (note ? ' is-clear' : '')}
           viewBox={`0 0 ${DIAL.width} ${DIAL.height}`}
@@ -147,6 +147,18 @@ export const DialWindow = memo(function DialWindow({
             </g>
           )}
 
+          <g className="needle" ref={needle} aria-hidden="true">
+            <line
+              className="needle-shadow"
+              x1={DIAL.cx + 2.2}
+              y1={DIAL.cy}
+              x2={DIAL.cx + 2.2}
+              y2={8}
+            />
+            <line className="needle-bar" x1={DIAL.cx} y1={DIAL.cy} x2={DIAL.cx} y2={8} />
+            <polygon className="needle-tip" points="170,4 172.6,14 167.4,14" />
+          </g>
+
           {marks.map((m) =>
             found[m.id] ? (
               <text
@@ -163,10 +175,6 @@ export const DialWindow = memo(function DialWindow({
         </svg>
 
         <div className={'dial-scrim' + (note ? ' is-on' : '')} aria-hidden="true" />
-
-        <div className="needle" ref={needle} aria-hidden="true">
-          <span className="needle-tip" />
-        </div>
 
         <div className={'fine-tag' + (fine ? ' is-on' : '')}>FINE</div>
 
